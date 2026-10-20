@@ -1,3 +1,5 @@
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import type { Metadata } from "next";
 import { Anton, Inter } from "next/font/google";
 import "./globals.css";
@@ -27,7 +29,9 @@ export default function RootLayout({
   return (
     <html lang="id" className={`${anton.variable} ${inter.variable}`}>
       <body className="bg-white font-sans text-ink antialiased">
+        <Navbar />
         {children}
+        <Footer />
       </body>
     </html>
   );

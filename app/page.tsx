@@ -1,6 +1,6 @@
 export default function Home() {
   return (
-    <main className="p-10">
+    <main className="p-10 pt-32">
       <h1 className="font-display text-7xl uppercase text-primary">
         PASTEER3
       </h1>
