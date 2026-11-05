@@ -1,6 +1,6 @@
 import sharp from "sharp";
 import { readdirSync, statSync, renameSync, unlinkSync } from "node:fs";
-import { join, extname } from "node:path";
+import { join, extname, basename } from "node:path";
 
 const ROOT = "public/images";
 const MAX_WIDTH = 2000;
@@ -13,6 +13,9 @@ function walk(dir) {
 }
 
 for (const file of walk(ROOT)) {
+    const name = basename(file);
+    if (name.startsWith("hero-")) continue;
+
     const ext = extname(file).toLowerCase();
     if (ext !== ".jpg" && ext !== ".png") continue;
 

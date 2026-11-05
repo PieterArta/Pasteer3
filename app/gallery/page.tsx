@@ -1,7 +1,26 @@
-export default function GalleryPage() {
+import type { Metadata } from "next";
+import GalleryHero from "@/components/gallery/GalleryHero";
+import GalleryGrid from "@/components/gallery/GalleryGrid";
+import CtaBand from "@/components/home/CtaBand";
+import { getGallery } from "@/lib/queries/gallery";
+
+export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Galeri Kami | PASTEER3",
+  description:
+    "Dokumentasi kegiatan PASTEER3, komunitas volunteer dari Lampung.",
+};
+
+export default async function GalleryPage() {
+  const photos = await getGallery();
+  const safePhotos = photos && photos.length > 0 ? photos : [];
+
   return (
-    <main className="mx-auto max-w-[1200px] px-5 pb-24 pt-32">
-      <h1 className="font-display text-6xl uppercase text-primary">Gallery</h1>
+    <main>
+      <GalleryHero />
+      <GalleryGrid initialPhotos={safePhotos} />
+      <CtaBand />
     </main>
   );
 }

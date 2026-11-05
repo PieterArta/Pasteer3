@@ -15,3 +15,68 @@
   --font-display: var(--font-anton), Impact, sans-serif;
   --font-sans: var(--font-inter), Helvetica, Arial, sans-serif;
 }
+
+:root {
+  --container-max: 1840px;
+  --container-pad: 24px;
+  --nav-glass-bg: rgba(11, 47, 122, 0.50);
+  --nav-glass-blur: 24px;
+  --nav-glass-border: rgba(255, 255, 255, 0.28);
+
+  /* Team Card Nameplate — all sizes are cqw (% of card width) so the plate scales
+     proportionally at every viewport. Only border width and blur radius stay in px.
+     Reference: Figma card width = 530px.
+     To tune: change these variables only; do not touch TeamCard.tsx. */
+  --plate-left: 9cqw;
+  --plate-bottom: 15.5cqw;
+  --plate-pad-y: 3cqw;
+  --plate-pad-x: 3.8cqw;
+  --plate-radius: 3cqw;
+  --plate-name: 3.5cqw;
+  /* ~18.6px on a 530px card */
+  --plate-role: 2.8cqw;
+  /* ~14.8px on a 530px card */
+  --plate-gap: 0.4cqw;
+  --plate-max-w: 92cqw;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --container-pad: 40px;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --container-pad: 56px;
+  }
+}
+
+@utility container-site {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--container-max);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--container-pad);
+  padding-right: var(--container-pad);
+}
+
+.container-site {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--container-max);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--container-pad);
+  padding-right: var(--container-pad);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

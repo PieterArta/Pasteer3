@@ -1,7 +1,26 @@
-export default function EventsPage() {
+import type { Metadata } from "next";
+import EventsHero from "@/components/events/EventsHero";
+import EventGrid from "@/components/events/EventGrid";
+import CtaBand from "@/components/home/CtaBand";
+import { getEvents } from "@/lib/queries/events";
+
+export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Event Kami | PASTEER3",
+  description:
+    "Daftar event yang didukung oleh PASTEER3, komunitas volunteer dari Lampung.",
+};
+
+export default async function EventsPage() {
+  const events = await getEvents();
+  const safeEvents = events && events.length > 0 ? events : [];
+
   return (
-    <main className="mx-auto max-w-[1200px] px-5 pb-24 pt-32">
-      <h1 className="font-display text-6xl uppercase text-primary">Events</h1>
+    <main>
+      <EventsHero />
+      <EventGrid initialEvents={safeEvents} />
+      <CtaBand />
     </main>
   );
 }
