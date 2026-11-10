@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Image from "next/image";
-import { X, Upload } from "lucide-react";
+import { X, Upload, Crop as CropIcon } from "lucide-react";
 import { upsertGalleryPhoto } from "@/lib/actions/gallery";
 import { useToast } from "@/components/admin/Toast";
+import ImageCropModal from "@/components/admin/ImageCropModal";
 import type { GalleryPhoto } from "@/lib/types";
 import type { Event } from "@/lib/types";
 
@@ -25,19 +25,33 @@ export default function GalleryModal({ photo, events, onClose, onSaved }: Props)
   const [sortOrder, setSortOrder] = useState(photo?.sort_order ?? 0);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>(photo?.image_url ?? "");
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState<string>("");
+  const [cropFileName, setCropFileName] = useState<string>("gallery.jpg");
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !cropModalOpen) onClose();
+    };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [onClose]);
+  }, [onClose, cropModalOpen]);
 
   const handleFile = (f: File | null) => {
     if (!f) return;
     if (f.size > MAX_SIZE) { alert("Ukuran file maksimal 5 MB."); return; }
-    setFile(f);
-    setPreview(URL.createObjectURL(f));
+    const objectUrl = URL.createObjectURL(f);
+    setCropImageSrc(objectUrl);
+    setCropFileName(f.name);
+    setCropModalOpen(true);
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const handleCropDone = (croppedFile: File, previewUrl: string) => {
+    setFile(croppedFile);
+    setPreview(previewUrl);
+    setCropModalOpen(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -111,23 +125,68 @@ export default function GalleryModal({ photo, events, onClose, onSaved }: Props)
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted">
               Foto {!photo && <span className="text-danger">*</span>}
             </label>
-            <div
-              className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[6px] border-2 border-dashed border-line bg-surface p-4 transition-colors hover:border-primary"
-              onClick={() => fileRef.current?.click()}
-            >
-              {preview ? (
-                <div className="relative h-32 w-full overflow-hidden rounded-[4px]">
-                  <Image src={preview} alt="Preview" fill className="object-cover" />
+            {preview ? (
+              <div className="space-y-2">
+                <div className="relative h-44 w-full overflow-hidden rounded-[8px] border border-line bg-surface">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={preview}
+                    alt="Preview foto galeri"
+                    className="size-full object-cover"
+                  />
                 </div>
-              ) : (
-                <>
-                  <Upload size={24} className="text-muted" />
-                  <span className="text-xs text-muted">Klik untuk pilih gambar</span>
-                </>
-              )}
-            </div>
-            <input ref={fileRef} type="file" accept="image/*" className="hidden"
-              onChange={(e) => handleFile(e.target.files?.[0] ?? null)} />
+                <div className="flex flex-wrap items-center gap-3 text-xs">
+                  <button
+                    type="button"
+                    className="flex items-center gap-1.5 font-semibold text-primary hover:text-primary-bright transition-colors"
+                    onClick={() => {
+                      if (cropImageSrc || preview) {
+                        setCropImageSrc(cropImageSrc || preview);
+                        setCropModalOpen(true);
+                      }
+                    }}
+                  >
+                    <CropIcon size={14} />
+                    Sesuaikan / Crop
+                  </button>
+                  <span className="text-muted/40">•</span>
+                  <button
+                    type="button"
+                    className="font-medium text-muted hover:text-ink transition-colors"
+                    onClick={() => fileRef.current?.click()}
+                  >
+                    Ganti Foto
+                  </button>
+                  <span className="text-muted/40">•</span>
+                  <button
+                    type="button"
+                    className="font-medium text-muted hover:text-danger transition-colors"
+                    onClick={() => {
+                      setFile(null);
+                      setPreview("");
+                      setCropImageSrc("");
+                    }}
+                  >
+                    Hapus gambar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div
+                className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[6px] border-2 border-dashed border-line bg-surface p-6 transition-colors hover:border-primary"
+                onClick={() => fileRef.current?.click()}
+              >
+                <Upload size={24} className="text-muted" />
+                <span className="text-xs text-muted">Klik untuk pilih gambar</span>
+              </div>
+            )}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+            />
           </div>
 
           {/* Caption */}
@@ -169,6 +228,17 @@ export default function GalleryModal({ photo, events, onClose, onSaved }: Props)
           </button>
         </div>
       </div>
+
+      {/* Crop Modal */}
+      {cropModalOpen && cropImageSrc && (
+        <ImageCropModal
+          imageSrc={cropImageSrc}
+          originalFileName={cropFileName}
+          defaultAspect={4 / 5}
+          onCropDone={handleCropDone}
+          onCancel={() => setCropModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

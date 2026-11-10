@@ -55,19 +55,71 @@ export default function EventModal({
   const currentEvent = events[safeIndex];
 
   const [isClosing, setIsClosing] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const touchStartY = useRef<number | null>(null);
+  const currentDragY = useRef<number>(0);
   const sheetRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const prevIndex = (safeIndex - 1 + total) % total;
   const nextIndex = (safeIndex + 1) % total;
 
+  // Notify global navbar to hide on mount and restore on unmount/close
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("popup-open"));
+    return () => {
+      window.dispatchEvent(new CustomEvent("popup-close"));
+    };
+  }, []);
+
   // Handle animated close
   const triggerClose = useCallback(() => {
     setIsClosing(true);
+    setDragOffset(0);
+    setIsDragging(false);
     setTimeout(() => {
       onClose();
+      window.dispatchEvent(new CustomEvent("popup-close"));
     }, 280);
   }, [onClose]);
+
+  // Touch handlers for swipe-down-to-close on drag handle area
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    // Only track if screen is mobile (<768px)
+    if (window.innerWidth >= 768) return;
+    touchStartY.current = e.touches[0].clientY;
+    currentDragY.current = 0;
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (touchStartY.current === null) return;
+    const diff = e.touches[0].clientY - touchStartY.current;
+    // Only allow dragging down
+    if (diff > 0) {
+      currentDragY.current = diff;
+      setDragOffset(diff);
+    } else {
+      currentDragY.current = 0;
+      setDragOffset(0);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartY.current === null) return;
+    const finalDiff = currentDragY.current;
+    touchStartY.current = null;
+    setIsDragging(false);
+
+    if (finalDiff > 80) {
+      // Swiped down more than 80px -> animate sliding down and close
+      triggerClose();
+    } else {
+      // Less than 80px -> snap back
+      setDragOffset(0);
+    }
+  };
 
   // Navigate prev/next
   const handleNavigate = useCallback(
@@ -131,23 +183,38 @@ export default function EventModal({
         ref={sheetRef}
         className={`
           z-50 flex w-full flex-col overflow-hidden rounded-t-[28px] border-t border-white/[0.12]
-          bg-[#0F142D]/85 backdrop-blur-xl transition-all duration-300 ease-out
+          bg-[#0F142D]/85 backdrop-blur-xl
           md:static md:mx-auto md:w-[480px] md:max-w-[480px] md:rounded-[28px] md:border
           ${isClosing
-            ? "translate-y-full md:scale-95 md:opacity-0"
-            : "translate-y-0 md:scale-100 md:opacity-100"
+            ? "translate-y-full transition-all duration-300 ease-out md:scale-95 md:opacity-0"
+            : isDragging
+            ? ""
+            : "translate-y-0 transition-all duration-200 ease-out md:scale-100 md:opacity-100"
           }
         `}
         style={{
           height: "85svh",
           maxHeight: "85svh",
           borderColor: "rgba(255, 255, 255, 0.12)",
+          transform: !isClosing && dragOffset > 0 ? `translateY(${dragOffset}px)` : undefined,
         }}
       >
-        {/* Drag handle at the top center: w-10 h-1 bg-white/30 rounded-full, margin 12px auto */}
+        {/* Drag handle area (top ~40px of sheet) for swipe-down-to-close */}
+        <div
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
+          className="flex h-10 w-full shrink-0 cursor-grab items-center justify-center active:cursor-grabbing md:hidden"
+          aria-hidden="true"
+        >
+          <div className="h-1 w-10 rounded-full bg-white/30" />
+        </div>
+
+        {/* Desktop drag handle (visual only) */}
         <div
           aria-hidden="true"
-          className="mx-auto my-3 h-1 w-10 shrink-0 rounded-full bg-white/30"
+          className="mx-auto my-3 hidden h-1 w-10 shrink-0 rounded-full bg-white/30 md:block"
         />
 
         {/* Scrollable inside (overflow-y-auto) */}

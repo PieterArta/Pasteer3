@@ -60,40 +60,26 @@ function DesktopCards({
   );
 }
 
-/** Mobile Founder: first card full-width, next two cards side-by-side */
+/** Mobile Founder: single column, all cards stacked full-width */
 function MobileFounderCards({ members }: { members: TeamMember[] }) {
-  const [first, ...rest] = members;
   return (
-    <div className="flex flex-col gap-3 max-w-[560px] mx-auto w-full">
-      {first && (
+    <div className="flex flex-col gap-0 max-w-[560px] mx-auto w-full">
+      {members.map((m, i) => (
         <TeamCard
-          name={first.name}
-          role={first.role}
-          tone={first.tone}
-          image={{ src: first.image, width: first.width, height: first.height }}
-          priority
+          key={m.image}
+          name={m.name}
+          role={m.role}
+          tone={m.tone}
+          image={{ src: m.image, width: m.width, height: m.height }}
+          priority={i === 0}
           sizes="(max-width: 767px) calc(100vw - 48px)"
         />
-      )}
-      {rest.length > 0 && (
-        <div className="grid grid-cols-2 gap-3 items-start">
-          {rest.map((m) => (
-            <TeamCard
-              key={m.image}
-              name={m.name}
-              role={m.role}
-              tone={m.tone}
-              image={{ src: m.image, width: m.width, height: m.height }}
-              sizes="(max-width: 767px) calc(50vw - 30px)"
-            />
-          ))}
-        </div>
-      )}
+      ))}
     </div>
   );
 }
 
-/** Mobile Organizer: two cards side-by-side */
+/** Mobile Organizer: single column, cards stacked full-width */
 function MobileOrganizerCards({
   members,
   priority,
@@ -102,7 +88,7 @@ function MobileOrganizerCards({
   priority: boolean;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-3 items-start max-w-[560px] mx-auto w-full">
+    <div className="flex flex-col gap-0 max-w-[560px] mx-auto w-full">
       {members.map((m, i) => (
         <TeamCard
           key={m.image}
@@ -111,7 +97,7 @@ function MobileOrganizerCards({
           tone={m.tone}
           image={{ src: m.image, width: m.width, height: m.height }}
           priority={priority && i === 0}
-          sizes="(max-width: 767px) calc(50vw - 30px)"
+          sizes="(max-width: 767px) calc(100vw - 48px)"
         />
       ))}
     </div>
@@ -153,22 +139,10 @@ export default function Team() {
   return (
     <section
       aria-labelledby="team-heading"
-      className="bg-primary-deep pt-8 pb-20 md:pt-12 md:pb-28"
+      className="bg-primary-deep pt-8 pb-10 md:pt-12 md:pb-16"
     >
       <div className="container-site">
-        {/* Section marker */}
-        <div className="mb-8 flex items-center gap-3 md:mb-10">
-          <span
-            className="flex size-6 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-ink"
-            aria-hidden="true"
-          >
-            E
-          </span>
-          <span className="text-xs font-semibold uppercase tracking-widest text-white">
-            TIM
-          </span>
-          <div className="h-px flex-1 bg-white/20" aria-hidden="true" />
-        </div>
+
 
         {/* Heading + Subtitle – centered */}
         <div className="mb-8 text-center md:mb-10">

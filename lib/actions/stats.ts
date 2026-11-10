@@ -34,6 +34,7 @@ export async function updateSiteStats(
     }
 
     revalidatePath("/");
+    revalidatePath("/admin/dashboard");
     return { success: true };
   } catch (err: unknown) {
     console.error("Failed to updateSiteStats:", err);

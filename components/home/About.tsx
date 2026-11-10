@@ -37,7 +37,7 @@ export default function About({ stats }: { stats?: SiteStats | null }) {
 
       <h2
         id="about-heading"
-        className="mt-6 font-display text-[32px] uppercase leading-tight md:text-[48px] text-ink"
+        className="mt-6 font-baloo font-bold text-[32px] uppercase leading-tight md:text-[48px] text-ink"
       >
         EVERY EVENT NEEDS,{" "}
         <br className="hidden md:block" />

@@ -3,12 +3,34 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { cloudinary } from "@/lib/cloudinary";
+import { deleteCloudinaryImage } from "@/lib/cloudinary";
 import type { GalleryPhoto } from "@/lib/types";
 
 export async function upsertGalleryPhoto(data: Partial<GalleryPhoto>) {
   try {
     const supabase = await createClient();
+
+    // If updating existing gallery photo and image was changed, cleanup the old image from Cloudinary
+    if (data.id && data.image_public_id) {
+      try {
+        const { data: existing } = await supabase
+          .from("gallery")
+          .select("image_public_id, image_url")
+          .eq("id", data.id)
+          .maybeSingle();
+
+        if (
+          existing &&
+          existing.image_public_id &&
+          existing.image_public_id !== data.image_public_id
+        ) {
+          await deleteCloudinaryImage(existing.image_public_id);
+        }
+      } catch (checkErr) {
+        console.warn("Could not check old gallery image for cleanup:", checkErr);
+      }
+    }
+
     let result = null;
 
     const userRes = await supabase
@@ -52,6 +74,31 @@ export async function upsertGalleryPhoto(data: Partial<GalleryPhoto>) {
 export async function deleteGalleryPhoto(id: string, imagePublicId?: string) {
   try {
     const supabase = await createClient();
+
+    // 1. Cari data gambar sebelum baris dihapus dari Supabase
+    let targetImage = imagePublicId;
+    if (!targetImage) {
+      const { data: existing } = await supabase
+        .from("gallery")
+        .select("image_public_id, image_url")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (existing) {
+        targetImage = existing.image_public_id || existing.image_url;
+      } else {
+        const { data: adminExisting } = await supabaseAdmin
+          .from("gallery")
+          .select("image_public_id, image_url")
+          .eq("id", id)
+          .maybeSingle();
+        if (adminExisting) {
+          targetImage = adminExisting.image_public_id || adminExisting.image_url;
+        }
+      }
+    }
+
+    // 2. Hapus baris dari tabel Supabase
     const userRes = await supabase
       .from("gallery")
       .delete()
@@ -72,12 +119,9 @@ export async function deleteGalleryPhoto(id: string, imagePublicId?: string) {
       }
     }
 
-    if (imagePublicId) {
-      try {
-        await cloudinary.uploader.destroy(imagePublicId);
-      } catch (cloudErr) {
-        console.error("Cloudinary destroy error:", cloudErr);
-      }
+    // 3. Hapus foto dari Cloudinary secara otomatis
+    if (targetImage) {
+      await deleteCloudinaryImage(targetImage);
     }
 
     revalidatePath("/admin/galeri");

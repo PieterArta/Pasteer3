@@ -17,8 +17,23 @@ const links = [
 export default function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [popupOpen, setPopupOpen] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const hamburgerButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Listen for popup-open and popup-close custom events
+  useEffect(() => {
+    const handlePopupOpen = () => setPopupOpen(true);
+    const handlePopupClose = () => setPopupOpen(false);
+
+    window.addEventListener("popup-open", handlePopupOpen);
+    window.addEventListener("popup-close", handlePopupClose);
+
+    return () => {
+      window.removeEventListener("popup-open", handlePopupOpen);
+      window.removeEventListener("popup-close", handlePopupClose);
+    };
+  }, []);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -70,8 +85,12 @@ export default function Navbar() {
   return (
     <>
       <header
-        className={`fixed inset-x-0 top-3 z-50 transition-opacity duration-200 ${
-          open ? "pointer-events-none opacity-0 md:pointer-events-auto md:opacity-100" : "opacity-100"
+        className={`fixed inset-x-0 top-3 z-50 transition-opacity duration-150 ${
+          popupOpen
+            ? "pointer-events-none opacity-0"
+            : open
+            ? "pointer-events-none opacity-0 md:pointer-events-auto md:opacity-100"
+            : "pointer-events-auto opacity-100"
         }`}
       >
         <div className="container-site">

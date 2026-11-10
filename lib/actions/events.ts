@@ -3,17 +3,38 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { cloudinary } from "@/lib/cloudinary";
+import { deleteCloudinaryImage } from "@/lib/cloudinary";
 import type { Event } from "@/lib/types";
 
 export async function upsertEvent(data: Partial<Event>) {
   try {
+    const supabase = await createClient();
+
+    // If updating existing event and image was changed, cleanup the old image from Cloudinary
+    if (data.id && data.image_public_id) {
+      try {
+        const { data: existing } = await supabase
+          .from("events")
+          .select("image_public_id, image_url")
+          .eq("id", data.id)
+          .maybeSingle();
+
+        if (
+          existing &&
+          existing.image_public_id &&
+          existing.image_public_id !== data.image_public_id
+        ) {
+          await deleteCloudinaryImage(existing.image_public_id);
+        }
+      } catch (checkErr) {
+        console.warn("Could not check old event image for cleanup:", checkErr);
+      }
+    }
+
     const payload = {
       ...data,
       updated_at: new Date().toISOString(),
     };
-
-    const supabase = await createClient();
 
     // 1. Try with user client (has RLS authenticated admin permissions)
     let result = null;
@@ -59,6 +80,31 @@ export async function upsertEvent(data: Partial<Event>) {
 export async function deleteEvent(id: string, imagePublicId?: string) {
   try {
     const supabase = await createClient();
+
+    // 1. Cari data gambar sebelum baris dihapus dari Supabase
+    let targetImage = imagePublicId;
+    if (!targetImage) {
+      const { data: existing } = await supabase
+        .from("events")
+        .select("image_public_id, image_url")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (existing) {
+        targetImage = existing.image_public_id || existing.image_url;
+      } else {
+        const { data: adminExisting } = await supabaseAdmin
+          .from("events")
+          .select("image_public_id, image_url")
+          .eq("id", id)
+          .maybeSingle();
+        if (adminExisting) {
+          targetImage = adminExisting.image_public_id || adminExisting.image_url;
+        }
+      }
+    }
+
+    // 2. Hapus baris dari tabel Supabase
     const userRes = await supabase
       .from("events")
       .delete()
@@ -79,12 +125,9 @@ export async function deleteEvent(id: string, imagePublicId?: string) {
       }
     }
 
-    if (imagePublicId) {
-      try {
-        await cloudinary.uploader.destroy(imagePublicId);
-      } catch (cloudErr) {
-        console.error("Cloudinary destroy error:", cloudErr);
-      }
+    // 3. Hapus foto dari Cloudinary secara otomatis
+    if (targetImage) {
+      await deleteCloudinaryImage(targetImage);
     }
 
     revalidatePath("/admin/kegiatan");

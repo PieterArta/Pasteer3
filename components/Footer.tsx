@@ -3,9 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const WA_NUMBER = "6282178904321";
-const WA_LINK = `https://wa.me/${WA_NUMBER}`;
-
 const quickLinks = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About" },
@@ -137,10 +134,10 @@ export default function Footer() {
                 <li>Bandar Lampung, Lampung, Indonesia</li>
                 <li>
                   <a
-                    href="mailto:halo@pasteer3.org"
+                    href="mailto:pasteer@gmail.com"
                     className="transition-colors hover:text-accent"
                   >
-                    halo@pasteer3.org
+                    pasteer3@gmail.com
                   </a>
                 </li>
               </ul>
@@ -162,7 +159,7 @@ export default function Footer() {
                   <CameraIcon />
                 </a>
                 <a
-                  href="https://youtube.com/@pasteer3"
+                  href="https://www.tiktok.com/@pasukanvolunteer3"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="YouTube PASTEER3"
@@ -191,32 +188,6 @@ export default function Footer() {
           </p>
         </div>
       </footer>
-
-      {/* Floating chat button – green rounded-2xl squircle matching screenshot */}
-      <a
-        href={WA_LINK}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Chat WhatsApp PASTEER3"
-        className="fixed bottom-6 right-6 z-40 grid size-12 place-items-center rounded-2xl bg-[#10a37f] text-white shadow-xl transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white md:size-14"
-      >
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-          <path d="M8 10h.01" />
-          <path d="M12 10h.01" />
-          <path d="M16 10h.01" />
-        </svg>
-      </a>
     </>
   );
 }
